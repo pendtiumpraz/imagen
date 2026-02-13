@@ -1,0 +1,164 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==================== ENUMS ====================
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum SubscriptionPlan {
+  FREE
+  BASIC
+  PRO
+}
+
+enum GenerationCategory {
+  POSTER_KAJIAN
+  POSTER_DAKWAH
+  THUMBNAIL_KAJIAN
+  POSTER_RAMADHAN
+  POSTER_JUMAT
+  KARTU_UCAPAN_ISLAMI
+  POSTER_PRODUK
+  BANNER_PROMO
+  THUMBNAIL_MARKETPLACE
+  FEED_INSTAGRAM
+  STORY_INSTAGRAM
+}
+
+enum GenerationStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+// ==================== MODELS ====================
+
+model User {
+  id          String           @id @default(cuid())
+  name        String
+  email       String           @unique
+  password    String
+  role        Role             @default(USER)
+  plan        SubscriptionPlan @default(FREE)
+  dailyQuota  Int              @default(10)
+  customQuota Int?
+  isBanned    Boolean          @default(false)
+  banReason   String?
+  avatarUrl   String?
+
+  deletedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  generations   Generation[]
+  subscriptions Subscription[]
+
+  @@index([email])
+  @@index([deletedAt])
+}
+
+model Generation {
+  id       String             @id @default(cuid())
+  userId   String
+  category GenerationCategory
+  status   GenerationStatus   @default(PENDING)
+
+  prompt          String  @db.Text
+  enhancedPrompt  String? @db.Text
+  referenceImages String[]
+  aspectRatio     String  @default("1:1")
+
+  resultImageUrl String?
+  resultMetadata Json?
+
+  errorMessage String?
+
+  isPublic Boolean @default(true)
+
+  deletedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([userId, createdAt])
+  @@index([deletedAt])
+  @@index([isPublic, category, createdAt])
+}
+
+model Subscription {
+  id        String           @id @default(cuid())
+  userId    String
+  plan      SubscriptionPlan
+  price     Int
+  startDate DateTime
+  endDate   DateTime
+  isActive  Boolean          @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([endDate])
+}
+
+model AIProvider {
+  id       String  @id @default(cuid())
+  name     String  @unique
+  apiKey   String
+  baseUrl  String
+  modelId  String?
+  isActive Boolean @default(true)
+  config   Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model TempFile {
+  id           String   @id @default(cuid())
+  filename     String
+  originalName String
+  mimeType     String
+  url          String
+  expiresAt    DateTime
+
+  createdAt DateTime @default(now())
+
+  @@index([expiresAt])
+}
+
+model DailyUsage {
+  id     String   @id @default(cuid())
+  userId String
+  date   DateTime @db.Date
+  count  Int      @default(0)
+
+  @@unique([userId, date])
+  @@index([userId, date])
+}
+
+model SystemSetting {
+  id          String  @id @default(cuid())
+  key         String  @unique
+  value       String  @db.Text
+  description String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
