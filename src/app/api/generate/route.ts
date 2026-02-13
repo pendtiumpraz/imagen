@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { checkQuota, incrementUsage } from "@/lib/quota";
 import { generateTextToImage, generateImageToImage } from "@/lib/modelslab";
 import { GenerationCategory } from "@prisma/client";
+import { buildIslamicPrompt, getCategoryInfo } from "@/lib/utils";
 
 export async function POST(req: NextRequest) {
     try {
@@ -29,8 +30,19 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        const { prompt, category, aspectRatio, referenceImages, isPublic } =
-            await req.json();
+        const {
+            prompt,
+            category,
+            aspectRatio,
+            referenceImages,
+            isPublic,
+            style,
+            background,
+            customBackground,
+            colorPalette,
+            customColor,
+            elements,
+        } = await req.json();
 
         if (!prompt?.trim()) {
             return NextResponse.json(
@@ -39,13 +51,26 @@ export async function POST(req: NextRequest) {
             );
         }
 
+        // Build the full Islamic-compliant prompt
+        const categoryInfo = getCategoryInfo(category as GenerationCategory);
+        const fullPrompt = buildIslamicPrompt({
+            userPrompt: prompt,
+            categoryTemplate: categoryInfo?.promptTemplate || "",
+            style,
+            background,
+            customBackground,
+            colorPalette,
+            customColor,
+            elements,
+        });
+
         // Create generation record
         const generation = await prisma.generation.create({
             data: {
                 userId,
                 category: category as GenerationCategory,
                 status: "PROCESSING",
-                prompt,
+                prompt: fullPrompt,
                 aspectRatio: aspectRatio || "1:1",
                 referenceImages: referenceImages || [],
                 isPublic: isPublic ?? true,
@@ -54,16 +79,18 @@ export async function POST(req: NextRequest) {
 
         try {
             // Call ModelsLab API
+            // With reference → image-to-image (nano-banana-pro image edit)
+            // Without reference → text-to-image (nano-banana-pro)
             let result;
             if (referenceImages && referenceImages.length > 0) {
                 result = await generateImageToImage({
-                    prompt,
+                    prompt: fullPrompt,
                     initImages: referenceImages,
                     aspectRatio: aspectRatio || "1:1",
                 });
             } else {
                 result = await generateTextToImage({
-                    prompt,
+                    prompt: fullPrompt,
                     aspectRatio: aspectRatio || "1:1",
                 });
             }

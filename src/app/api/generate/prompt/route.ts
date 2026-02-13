@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { enhancePrompt } from "@/lib/deepseek";
+import { enhancePrompt, generateAutoFill } from "@/lib/deepseek";
 import { GenerationCategory } from "@prisma/client";
 
 export async function POST(req: NextRequest) {
@@ -10,8 +10,18 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        const { prompt, category } = await req.json();
+        const { prompt, category, action } = await req.json();
 
+        // Auto-fill mode: generate all fields via AI
+        if (action === "autofill") {
+            const suggestion = await generateAutoFill({
+                category: category as GenerationCategory,
+                userHint: prompt || undefined,
+            });
+            return NextResponse.json({ suggestion });
+        }
+
+        // Default: enhance prompt only
         if (!prompt?.trim()) {
             return NextResponse.json(
                 { error: "Prompt tidak boleh kosong" },
