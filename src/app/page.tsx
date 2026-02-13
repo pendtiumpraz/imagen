@@ -5,6 +5,8 @@ import { PublicGallery } from "@/components/landing/PublicGallery";
 import { Pricing } from "@/components/landing/Pricing";
 import { Footer } from "@/components/landing/Footer";
 
+export const dynamic = "force-dynamic";
+
 export default async function HomePage() {
   return (
     <>
