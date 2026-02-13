@@ -9,7 +9,7 @@ export default function middleware(req: NextRequest) {
     const { pathname } = req.nextUrl;
 
     // Public routes - always allowed
-    const publicPaths = ["/", "/login", "/register", "/api/auth", "/api/public"];
+    const publicPaths = ["/", "/login", "/register", "/products", "/api/auth", "/api/public"];
     const isPublicPath = publicPaths.some((p) => pathname.startsWith(p));
     const isStaticFile = pathname.startsWith("/_next") || pathname.startsWith("/uploads") || pathname.includes(".");
 
