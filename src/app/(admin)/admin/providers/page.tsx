@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Key, Save, Loader2, AlertCircle, CheckCircle } from "lucide-react";
+import { Key, Save, Loader2, AlertCircle, CheckCircle, Cpu, Sparkles } from "lucide-react";
 import toast from "react-hot-toast";
 
 interface Provider {
@@ -16,15 +16,28 @@ interface Provider {
 const defaultProviders = [
     {
         name: "modelslab",
-        label: "ModelsLab (Image Generation)",
+        label: "ModelsLab",
+        desc: "Image Generation (Text-to-Image & Image Edit)",
         defaultUrl: "https://modelslab.com/api/v7/images",
         defaultModel: "nano-banana-pro",
+        features: [
+            "Text-to-Image (tanpa reference → nano-banana-pro)",
+            "Image-to-Image Edit (dengan reference → nano-banana-pro image edit)",
+            "Mendukung aspect ratio custom",
+            "Safety checker bawaan",
+        ],
     },
     {
         name: "deepseek",
-        label: "DeepSeek (Prompt Enhancement)",
+        label: "DeepSeek",
+        desc: "AI Prompt Enhancement",
         defaultUrl: "https://api.deepseek.com/v1",
         defaultModel: "deepseek-chat",
+        features: [
+            "Enhance prompt secara otomatis",
+            "Optimasi prompt untuk Islamic poster",
+            "Terjemahan prompt ke English",
+        ],
     },
 ];
 
@@ -127,8 +140,89 @@ export default function AdminProvidersPage() {
         );
     }
 
+    const activeModels = defaultProviders.filter((dp) => {
+        const existing = providers.find((p) => p.name === dp.name);
+        return existing?.isActive;
+    });
+
     return (
         <>
+            {/* Active AI Models Overview */}
+            <div className="card" style={{ marginBottom: "24px", border: "1px solid var(--primary-600)" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "16px" }}>
+                    <div
+                        className="category-card-icon"
+                        style={{ background: "rgba(13,159,102,0.12)", color: "var(--primary-400)" }}
+                    >
+                        <Cpu size={20} />
+                    </div>
+                    <div>
+                        <h3 style={{ fontWeight: 700, fontSize: "var(--text-base)" }}>
+                            AI Models Aktif
+                        </h3>
+                        <p style={{ fontSize: "12px", color: "var(--surface-300)" }}>
+                            {activeModels.length} provider aktif dari {defaultProviders.length} total
+                        </p>
+                    </div>
+                </div>
+
+                {activeModels.length === 0 ? (
+                    <div style={{
+                        padding: "16px", background: "rgba(239,68,68,0.08)",
+                        borderRadius: "10px", fontSize: "var(--text-sm)", color: "#F87171"
+                    }}>
+                        <AlertCircle size={16} style={{ display: "inline", marginRight: "8px", verticalAlign: "middle" }} />
+                        Belum ada AI provider yang aktif. Konfigurasi minimal 1 provider di bawah.
+                    </div>
+                ) : (
+                    <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                        {activeModels.map((dp) => {
+                            const form = formState[dp.name];
+                            return (
+                                <div
+                                    key={dp.name}
+                                    style={{
+                                        display: "flex", alignItems: "center", justifyContent: "space-between",
+                                        padding: "12px 16px", background: "rgba(13,159,102,0.06)",
+                                        borderRadius: "10px", border: "1px solid rgba(13,159,102,0.15)"
+                                    }}
+                                >
+                                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                                        <Sparkles size={16} style={{ color: "var(--primary-400)" }} />
+                                        <div>
+                                            <span style={{ fontWeight: 600, fontSize: "var(--text-sm)" }}>
+                                                {dp.label}
+                                            </span>
+                                            <span style={{
+                                                fontSize: "11px", color: "var(--surface-300)",
+                                                marginLeft: "8px"
+                                            }}>
+                                                {dp.desc}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <span className="badge badge-primary">
+                                        {form?.modelId || dp.defaultModel}
+                                    </span>
+                                </div>
+                            );
+                        })}
+                    </div>
+                )}
+
+                <div style={{
+                    marginTop: "12px", padding: "10px 14px",
+                    background: "rgba(59,130,246,0.08)", borderRadius: "8px",
+                    fontSize: "12px", color: "var(--surface-300)", lineHeight: "1.6"
+                }}>
+                    <strong style={{ color: "var(--info)" }}>💡 Cara kerja:</strong>{" "}
+                    Tanpa image reference → <strong>Text-to-Image</strong> (nano-banana-pro).
+                    Dengan image reference → <strong>Image Edit</strong> (nano-banana-pro image-to-image).
+                    Prompt dienhance otomatis via <strong>DeepSeek AI</strong>.
+                </div>
+            </div>
+
+            {/* Provider Configuration */}
             <p style={{ color: "var(--surface-300)", fontSize: "var(--text-sm)", marginBottom: "24px" }}>
                 Kelola API key dan konfigurasi untuk AI providers. API key akan dienkripsi sebelum disimpan.
             </p>
@@ -183,6 +277,18 @@ export default function AdminProvidersPage() {
                                     />
                                     <span style={{ fontSize: "13px" }}>Aktif</span>
                                 </label>
+                            </div>
+
+                            {/* Features list */}
+                            <div style={{
+                                display: "flex", flexWrap: "wrap", gap: "6px",
+                                marginBottom: "16px"
+                            }}>
+                                {dp.features.map((f, i) => (
+                                    <span key={i} className="badge badge-info" style={{ fontSize: "11px" }}>
+                                        {f}
+                                    </span>
+                                ))}
                             </div>
 
                             <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>

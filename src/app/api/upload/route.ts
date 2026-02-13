@@ -1,12 +1,32 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { writeFile, mkdir } from "fs/promises";
+import { writeFile, mkdir, unlink } from "fs/promises";
 import { join } from "path";
 import { prisma } from "@/lib/prisma";
 import crypto from "crypto";
 
+// On-demand cleanup: delete expired temp files
+async function cleanupExpiredFiles() {
+    try {
+        const expired = await prisma.tempFile.findMany({
+            where: { expiresAt: { lt: new Date() } },
+            take: 10, // limit batch
+        });
+        for (const file of expired) {
+            try {
+                const filepath = join(process.cwd(), "public", "uploads", file.filename);
+                await unlink(filepath).catch(() => { });
+            } catch { /* ignore */ }
+            await prisma.tempFile.delete({ where: { id: file.id } }).catch(() => { });
+        }
+    } catch { /* non-critical */ }
+}
+
 export async function POST(req: NextRequest) {
     try {
+        // Clean up expired temp files in background
+        cleanupExpiredFiles();
+
         const session = await auth();
         if (!session?.user) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
