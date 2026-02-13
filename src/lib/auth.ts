@@ -2,8 +2,15 @@ import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { prisma } from "./prisma";
+import { authConfig } from "./auth.config";
 
+/**
+ * Full auth configuration with Prisma + bcrypt
+ * Used by API routes (Node.js runtime)
+ * NOT used by middleware (Edge runtime)
+ */
 export const { handlers, signIn, signOut, auth } = NextAuth({
+    ...authConfig,
     providers: [
         Credentials({
             name: "credentials",
@@ -47,30 +54,4 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             },
         }),
     ],
-    callbacks: {
-        async jwt({ token, user }) {
-            if (user) {
-                token.id = user.id;
-                token.role = (user as unknown as Record<string, unknown>).role;
-                token.plan = (user as unknown as Record<string, unknown>).plan;
-            }
-            return token;
-        },
-        async session({ session, token }) {
-            if (session.user) {
-                session.user.id = token.id as string;
-                (session.user as unknown as Record<string, unknown>).role = token.role;
-                (session.user as unknown as Record<string, unknown>).plan = token.plan;
-            }
-            return session;
-        },
-    },
-    pages: {
-        signIn: "/login",
-        error: "/login",
-    },
-    session: {
-        strategy: "jwt",
-        maxAge: 30 * 24 * 60 * 60, // 30 days
-    },
 });
