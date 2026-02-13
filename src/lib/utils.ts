@@ -388,37 +388,57 @@ export const ASPECT_RATIOS = [
     { value: "9:16", label: "9:16 Tall", width: 576, height: 1024 },
 ];
 
-export const PLAN_LIMITS: Record<string, { daily: number; price: number; name: string; features: string[] }> = {
+export interface PlanInfo {
+    monthly: number;
+    originalMonthly: number; // before promo
+    price: number;
+    name: string;
+    namePromo: string;
+    isLifetime: boolean;
+    features: string[];
+}
+
+export const PLAN_LIMITS: Record<string, PlanInfo> = {
     FREE: {
-        daily: 10,
+        monthly: 2,
+        originalMonthly: 2,
         price: 0,
-        name: "Gratis",
+        name: "Trial",
+        namePromo: "Trial Gratis",
+        isLifetime: true,
         features: [
-            "10 generasi per hari",
+            "2 generasi seumur hidup",
             "Semua kategori poster",
             "AI prompt enhancement",
             "Download hasil",
         ],
     },
     BASIC: {
-        daily: 50,
+        monthly: 150,
+        originalMonthly: 50,
         price: 49000,
         name: "Basic",
+        namePromo: "🌙 Promo Ramadhan",
+        isLifetime: false,
         features: [
-            "50 generasi per hari",
+            "150 gambar / bulan",
             "Semua kategori poster",
             "AI prompt enhancement",
             "Download hasil",
             "Prioritas antrian",
             "Tanpa watermark",
+            "Simpan brand preset",
         ],
     },
     PRO: {
-        daily: 200,
-        price: 100000,
+        monthly: 500,
+        originalMonthly: 200,
+        price: 99000,
         name: "Pro",
+        namePromo: "🌙 Promo Ramadhan",
+        isLifetime: false,
         features: [
-            "200 generasi per hari",
+            "500 gambar / bulan",
             "Semua kategori poster",
             "AI prompt enhancement",
             "Download hasil",
@@ -426,8 +446,17 @@ export const PLAN_LIMITS: Record<string, { daily: number; price: number; name: s
             "Tanpa watermark",
             "Output HD",
             "Support prioritas",
+            "Simpan brand preset",
         ],
     },
+};
+
+// Bank transfer info
+export const PAYMENT_INFO = {
+    bankName: "Bank Mandiri",
+    accountNumber: "1710010533530",
+    accountHolder: "Galih Prasetyo",
+    description: "Biaya berlangganan digunakan untuk sewa server AI, operasional dakwah di wilayah Blitar dan pelosok Blitar.",
 };
 
 /**
@@ -525,9 +554,4 @@ export function formatDateTime(date: Date | string): string {
 
 export function cn(...classes: (string | undefined | false | null)[]): string {
     return classes.filter(Boolean).join(" ");
-}
-
-export function getEffectiveQuota(user: { dailyQuota: number; customQuota: number | null; isBanned: boolean }): number {
-    if (user.isBanned) return 0;
-    return user.customQuota ?? user.dailyQuota;
 }

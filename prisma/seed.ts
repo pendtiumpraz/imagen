@@ -17,7 +17,8 @@ async function main() {
             password: adminPassword,
             role: "ADMIN",
             plan: "PRO",
-            dailyQuota: 200,
+            monthlyQuota: 500,
+            lifetimeQuota: 999999,
         },
     });
     console.log(`✅ Admin user created: ${admin.email}`);
@@ -33,7 +34,8 @@ async function main() {
             password: userPassword,
             role: "USER",
             plan: "FREE",
-            dailyQuota: 10,
+            monthlyQuota: 2,
+            lifetimeQuota: 2,
         },
     });
     console.log(`✅ Demo user created: ${user.email}`);

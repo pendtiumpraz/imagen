@@ -3,11 +3,12 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Moon, UserPlus, Loader2 } from "lucide-react";
+import { Moon, UserPlus, Loader2, Phone } from "lucide-react";
 
 export default function RegisterPage() {
     const [name, setName] = useState("");
     const [email, setEmail] = useState("");
+    const [phone, setPhone] = useState("");
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
     const [error, setError] = useState("");
@@ -34,7 +35,7 @@ export default function RegisterPage() {
             const res = await fetch("/api/auth/register", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ name, email, password }),
+                body: JSON.stringify({ name, email, phone, password }),
             });
 
             const data = await res.json();
@@ -99,6 +100,23 @@ export default function RegisterPage() {
                             onChange={(e) => setEmail(e.target.value)}
                             required
                         />
+                    </div>
+                    <div className="input-group">
+                        <label className="input-label" htmlFor="register-phone">
+                            Nomor HP (WhatsApp)
+                        </label>
+                        <input
+                            id="register-phone"
+                            type="tel"
+                            className="input"
+                            placeholder="08xxxxxxxxxx"
+                            value={phone}
+                            onChange={(e) => setPhone(e.target.value)}
+                            required
+                        />
+                        <p style={{ fontSize: "11px", color: "var(--surface-400)", marginTop: "4px" }}>
+                            1 nomor HP hanya untuk 1 akun. Digunakan untuk info program & promo.
+                        </p>
                     </div>
                     <div className="input-group">
                         <label className="input-label" htmlFor="register-password">

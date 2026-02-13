@@ -5,7 +5,7 @@ import { PublicGallery } from "@/components/landing/PublicGallery";
 import { Pricing } from "@/components/landing/Pricing";
 import { Footer } from "@/components/landing/Footer";
 
-export default function HomePage() {
+export default async function HomePage() {
   return (
     <>
       <LandingNavbar />

@@ -12,7 +12,7 @@ interface UserItem {
     email: string;
     role: string;
     plan: string;
-    dailyQuota: number;
+    monthlyQuota: number;
     customQuota: number | null;
     isBanned: boolean;
     banReason: string | null;
@@ -166,7 +166,7 @@ export default function AdminUsersPage() {
                                     <td>
                                         <span className="badge badge-primary">{user.plan}</span>
                                     </td>
-                                    <td>{user.customQuota ?? user.dailyQuota}</td>
+                                    <td>{user.customQuota ?? user.monthlyQuota}/bln</td>
                                     <td>{user._count.generations}</td>
                                     <td>
                                         {user.isBanned ? (
@@ -181,7 +181,7 @@ export default function AdminUsersPage() {
                                                 className="btn btn-ghost btn-sm"
                                                 onClick={() => {
                                                     setEditUser(user);
-                                                    setEditQuota(String(user.customQuota ?? user.dailyQuota));
+                                                    setEditQuota(String(user.customQuota ?? user.monthlyQuota));
                                                     setEditBanReason(user.banReason || "");
                                                     setNewPassword("");
                                                 }}
@@ -231,7 +231,7 @@ export default function AdminUsersPage() {
                         <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
                             {/* Quota */}
                             <div className="input-group">
-                                <label className="input-label">Kuota Harian (Custom)</label>
+                                <label className="input-label">Kuota Bulanan (Custom)</label>
                                 <input
                                     type="number"
                                     className="input"

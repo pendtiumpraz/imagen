@@ -39,6 +39,16 @@ export function LandingNavbar() {
                             Harga
                         </a>
                     </li>
+                    <li>
+                        <Link href="/products" className="nav-link">
+                            Produk Lain
+                        </Link>
+                    </li>
+                    <li>
+                        <a href="#contact" className="nav-link">
+                            Kontak
+                        </a>
+                    </li>
                 </ul>
 
                 <div className="nav-actions">

@@ -55,20 +55,28 @@ enum GenerationStatus {
   FAILED
 }
 
+enum PaymentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 // ==================== MODELS ====================
 
 model User {
-  id          String           @id @default(cuid())
-  name        String
-  email       String           @unique
-  password    String
-  role        Role             @default(USER)
-  plan        SubscriptionPlan @default(FREE)
-  dailyQuota  Int              @default(10)
-  customQuota Int?
-  isBanned    Boolean          @default(false)
-  banReason   String?
-  avatarUrl   String?
+  id            String           @id @default(cuid())
+  name          String
+  email         String           @unique
+  phone         String?          @unique
+  password      String
+  role          Role             @default(USER)
+  plan          SubscriptionPlan @default(FREE)
+  monthlyQuota  Int              @default(2)
+  lifetimeQuota Int              @default(2)
+  customQuota   Int?
+  isBanned      Boolean          @default(false)
+  banReason     String?
+  avatarUrl     String?
 
   deletedAt DateTime?
 
@@ -77,6 +85,9 @@ model User {
 
   generations   Generation[]
   subscriptions Subscription[]
+  brandPresets  BrandPreset[]
+  payments      PaymentConfirmation[]
+  monthlyUsages MonthlyUsage[]
 
   @@index([email])
   @@index([deletedAt])
@@ -157,6 +168,20 @@ model TempFile {
   @@index([expiresAt])
 }
 
+// Monthly usage tracking (replaces DailyUsage)
+model MonthlyUsage {
+  id     String @id @default(cuid())
+  userId String
+  month  String // format "YYYY-MM"
+  count  Int    @default(0)
+
+  @@unique([userId, month])
+  @@index([userId, month])
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+// Keep DailyUsage for backward compat but it won't be used anymore
 model DailyUsage {
   id     String   @id @default(cuid())
   userId String
@@ -165,6 +190,65 @@ model DailyUsage {
 
   @@unique([userId, date])
   @@index([userId, date])
+}
+
+// Brand presets - save brand identity for consistency
+model BrandPreset {
+  id          String  @id @default(cuid())
+  userId      String
+  name        String  // preset name e.g. "Masjid Al-Ikhlas"
+  isDefault   Boolean @default(false)
+
+  // Brand info
+  brandName   String?
+  logoUrl     String?
+
+  // Color & style preferences
+  style       String?  // e.g. "realistic", "3d"
+  colorPalette String?
+  customColor String?
+  background  String?
+  customBackground String?
+  elements    String[] // array of element IDs
+
+  // Social media
+  socials     Json?    // { instagram: "@xyz", whatsapp: "08xx", ... }
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+}
+
+// Payment confirmation
+model PaymentConfirmation {
+  id           String        @id @default(cuid())
+  userId       String
+  plan         SubscriptionPlan
+  amount       Int           // Rp
+  status       PaymentStatus @default(PENDING)
+
+  // Transfer proof
+  proofImageUrl String?
+  senderName    String?
+  senderBank    String?
+  transferDate  String?
+  notes         String?      @db.Text
+
+  // Admin response
+  adminNotes   String?       @db.Text
+  reviewedAt   DateTime?
+  reviewedBy   String?       // admin user ID
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([status])
 }
 
 model SystemSetting {

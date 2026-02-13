@@ -41,13 +41,16 @@ export async function PUT(
 
         if (body.plan) {
             updateData.plan = body.plan;
-            // Update daily quota based on plan
+            // Update monthly quota based on plan
             const quotaMap: Record<string, number> = {
-                FREE: 10,
-                BASIC: 50,
-                PRO: 200,
+                FREE: 2,
+                BASIC: 150,
+                PRO: 500,
             };
-            updateData.dailyQuota = quotaMap[body.plan] || 10;
+            updateData.monthlyQuota = quotaMap[body.plan] || 2;
+            if (body.plan === "FREE") {
+                updateData.lifetimeQuota = 2;
+            }
         }
 
         if (body.role) {

@@ -1,12 +1,12 @@
 import { prisma } from "@/lib/prisma";
-import { Users, Images, CreditCard, TrendingUp } from "lucide-react";
+import { Users, Images, CreditCard, TrendingUp, Clock } from "lucide-react";
 import Link from "next/link";
 
 export default async function AdminDashboard() {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const [totalUsers, totalGenerations, todayGenerations, activeSubscriptions] =
+    const [totalUsers, totalGenerations, todayGenerations, activeSubscriptions, pendingPayments] =
         await Promise.all([
             prisma.user.count({ where: { deletedAt: null } }),
             prisma.generation.count({ where: { deletedAt: null } }),
@@ -14,6 +14,7 @@ export default async function AdminDashboard() {
                 where: { deletedAt: null, createdAt: { gte: today } },
             }),
             prisma.subscription.count({ where: { isActive: true } }),
+            prisma.paymentConfirmation.count({ where: { status: "PENDING" } }),
         ]);
 
     return (
@@ -74,6 +75,22 @@ export default async function AdminDashboard() {
                     <div className="category-card-name">AI Provider</div>
                     <div className="category-card-desc">
                         Kelola API key ModelsLab dan DeepSeek
+                    </div>
+                </Link>
+                <Link href="/admin/payments" className="category-card">
+                    <div className="category-card-icon" style={{ background: "rgba(34,197,94,0.12)", color: "var(--success)" }}>
+                        <CreditCard size={22} />
+                    </div>
+                    <div className="category-card-name">
+                        Pembayaran
+                        {pendingPayments > 0 && (
+                            <span className="badge badge-accent" style={{ marginLeft: "8px", fontSize: "11px" }}>
+                                {pendingPayments} pending
+                            </span>
+                        )}
+                    </div>
+                    <div className="category-card-desc">
+                        Review & approve konfirmasi pembayaran user
                     </div>
                 </Link>
             </div>

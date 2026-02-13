@@ -20,6 +20,8 @@ const pageTitles: Record<string, string> = {
     "/admin/users": "Manajemen User",
     "/admin/providers": "AI Provider",
     "/admin/settings": "Pengaturan Sistem",
+    "/admin/payments": "Pembayaran",
+    "/payment": "Konfirmasi Pembayaran",
 };
 
 export function DashboardTopbar({ user }: TopbarProps) {

@@ -31,7 +31,7 @@ export async function GET(req: NextRequest) {
                 email: true,
                 role: true,
                 plan: true,
-                dailyQuota: true,
+                monthlyQuota: true,
                 customQuota: true,
                 isBanned: true,
                 banReason: true,

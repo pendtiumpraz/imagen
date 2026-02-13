@@ -58,8 +58,40 @@ export function Footer() {
                             <li>
                                 <Link href="/register">Daftar</Link>
                             </li>
+                            <li>
+                                <Link href="/products">Produk Lain</Link>
+                            </li>
                         </ul>
                     </div>
+                </div>
+
+                {/* Contact Section */}
+                <div id="contact" style={{
+                    padding: "24px",
+                    background: "rgba(13,159,102,0.06)",
+                    borderRadius: "16px",
+                    border: "1px solid rgba(13,159,102,0.15)",
+                    margin: "24px 0",
+                    textAlign: "center",
+                }}>
+                    <h4 style={{ fontSize: "16px", fontWeight: 700, marginBottom: "8px" }}>
+                        📱 Hubungi Kami
+                    </h4>
+                    <p style={{ fontSize: "13px", color: "var(--surface-300)", marginBottom: "12px", lineHeight: 1.6 }}>
+                        Butuh poster generator di website brand Anda? Ingin dibuatkan aplikasi AI custom?
+                    </p>
+                    <a
+                        href="https://wa.me/6281319504441?text=Halo%20Galih%20Praz,%20saya%20tertarik%20dengan%20layanan%20aplikasi%20AI"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="btn btn-primary"
+                        style={{ textDecoration: "none" }}
+                    >
+                        💬 WhatsApp Galih Praz — 081319504441
+                    </a>
+                    <p style={{ fontSize: "11px", color: "var(--surface-400)", marginTop: "8px" }}>
+                        Pemesanan Aplikasi, Chatbot, AI, dan Automasi
+                    </p>
                 </div>
                 <div className="footer-bottom">
                     <p className="footer-copy">

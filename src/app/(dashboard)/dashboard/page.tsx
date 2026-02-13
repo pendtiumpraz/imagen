@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Wand2, Images, Zap, TrendingUp, AlertTriangle } from "lucide-react";
-import { getEffectiveQuota } from "@/lib/utils";
+import { checkQuota } from "@/lib/quota";
 
 export default async function DashboardPage() {
     const session = await auth();
@@ -12,8 +12,6 @@ export default async function DashboardPage() {
     const user = await prisma.user.findUnique({
         where: { id: session.user.id },
         select: {
-            dailyQuota: true,
-            customQuota: true,
             isBanned: true,
             banReason: true,
             plan: true,
@@ -22,13 +20,9 @@ export default async function DashboardPage() {
 
     if (!user) redirect("/login");
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const quota = await checkQuota(session.user.id);
 
-    const [todayUsage, totalGenerations, recentGenerations] = await Promise.all([
-        prisma.dailyUsage.findUnique({
-            where: { userId_date: { userId: session.user.id, date: today } },
-        }),
+    const [totalGenerations, recentGenerations] = await Promise.all([
         prisma.generation.count({
             where: { userId: session.user.id, deletedAt: null },
         }),
@@ -51,10 +45,9 @@ export default async function DashboardPage() {
         }),
     ]);
 
-    const limit = getEffectiveQuota(user);
-    const used = todayUsage?.count ?? 0;
-    const remaining = Math.max(0, limit - used);
-    const usagePercent = limit > 0 ? (used / limit) * 100 : 100;
+    const usagePercent = quota.limit > 0 ? (quota.used / quota.limit) * 100 : 100;
+    const quotaLabel = quota.isLifetime ? "Kuota Seumur Hidup" : "Kuota Bulan Ini";
+    const usedLabel = quota.isLifetime ? "total sepanjang waktu" : "bulan ini";
 
     return (
         <>
@@ -73,7 +66,7 @@ export default async function DashboardPage() {
             <div className="stats-grid">
                 <div className="stat-card">
                     <div className="stat-card-header">
-                        <span className="stat-card-label">Sisa Hari Ini</span>
+                        <span className="stat-card-label">Sisa Kuota</span>
                         <div
                             className="stat-card-icon"
                             style={{ background: "rgba(13,159,102,0.12)", color: "var(--primary-400)" }}
@@ -81,15 +74,15 @@ export default async function DashboardPage() {
                             <Zap size={20} />
                         </div>
                     </div>
-                    <div className="stat-card-value">{remaining}</div>
+                    <div className="stat-card-value">{quota.remaining}</div>
                     <div className="stat-card-change" style={{ color: "var(--surface-300)" }}>
-                        dari {limit} kuota harian
+                        dari {quota.limit} {quota.isLifetime ? "seumur hidup" : "per bulan"}
                     </div>
                 </div>
 
                 <div className="stat-card">
                     <div className="stat-card-header">
-                        <span className="stat-card-label">Digunakan Hari Ini</span>
+                        <span className="stat-card-label">Digunakan</span>
                         <div
                             className="stat-card-icon"
                             style={{ background: "rgba(59,130,246,0.12)", color: "var(--info)" }}
@@ -97,9 +90,9 @@ export default async function DashboardPage() {
                             <TrendingUp size={20} />
                         </div>
                     </div>
-                    <div className="stat-card-value">{used}</div>
+                    <div className="stat-card-value">{quota.used}</div>
                     <div className="stat-card-change" style={{ color: "var(--surface-300)" }}>
-                        generasi hari ini
+                        generasi {usedLabel}
                     </div>
                 </div>
 
@@ -122,22 +115,29 @@ export default async function DashboardPage() {
 
             <div className="quota-section">
                 <div className="quota-header">
-                    <span className="quota-label">Kuota Harian</span>
+                    <span className="quota-label">{quotaLabel}</span>
                     <span className="quota-count">
-                        {used} / {limit}
+                        {quota.used} / {quota.limit}
                     </span>
                 </div>
                 <div className="progress-bar">
                     <div
                         className={`progress-fill ${usagePercent > 90
-                                ? "progress-fill-danger"
-                                : usagePercent > 70
-                                    ? "progress-fill-warning"
-                                    : ""
+                            ? "progress-fill-danger"
+                            : usagePercent > 70
+                                ? "progress-fill-warning"
+                                : ""
                             }`}
                         style={{ width: `${Math.min(100, usagePercent)}%` }}
                     />
                 </div>
+                {user.plan === "FREE" && (
+                    <div style={{ marginTop: "8px", fontSize: "12px", textAlign: "center" }}>
+                        <Link href="/subscription" style={{ color: "var(--primary-400)", textDecoration: "underline" }}>
+                            🌙 Upgrade ke Paket Berbayar untuk lebih banyak kuota!
+                        </Link>
+                    </div>
+                )}
             </div>
 
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "24px" }}>
