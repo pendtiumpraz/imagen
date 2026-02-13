@@ -4,7 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { checkQuota, incrementUsage } from "@/lib/quota";
 import { generateTextToImage, generateImageToImage } from "@/lib/modelslab";
 import { GenerationCategory } from "@prisma/client";
-import { buildIslamicPrompt, getCategoryInfo } from "@/lib/utils";
+import { buildIslamicPrompt, getCategoryInfo, PAYMENT_INFO } from "@/lib/utils";
+import { checkPromptSafety, checkFraudAttempt } from "@/lib/content-filter";
 
 export async function POST(req: NextRequest) {
     try {
@@ -48,6 +49,33 @@ export async function POST(req: NextRequest) {
             return NextResponse.json(
                 { error: "Prompt tidak boleh kosong" },
                 { status: 400 }
+            );
+        }
+
+        // Content safety check — NSFW filter
+        const safetyCheck = checkPromptSafety(prompt);
+        if (!safetyCheck.safe) {
+            return NextResponse.json(
+                { error: `⛔ Gagal generate: ${safetyCheck.reason}` },
+                { status: 400 }
+            );
+        }
+
+        // Fraud detection check
+        const fraudCheck = checkFraudAttempt({
+            prompt,
+            originalAccountNumber: PAYMENT_INFO.accountNumber,
+            originalAccountName: PAYMENT_INFO.accountHolder,
+        });
+        if (!fraudCheck.safe) {
+            // Log fraud attempt
+            await prisma.user.update({
+                where: { id: userId },
+                data: { fraudAttempts: { increment: 1 } },
+            });
+            return NextResponse.json(
+                { error: `⚠️ Percobaan fraud terdeteksi: ${fraudCheck.reason}` },
+                { status: 403 }
             );
         }
 

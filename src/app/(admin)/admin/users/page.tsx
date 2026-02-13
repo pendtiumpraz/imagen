@@ -16,6 +16,7 @@ interface UserItem {
     customQuota: number | null;
     isBanned: boolean;
     banReason: string | null;
+    fraudAttempts: number;
     createdAt: string;
     _count: { generations: number };
 }
@@ -136,6 +137,7 @@ export default function AdminUsersPage() {
                                 <th>Plan</th>
                                 <th>Quota</th>
                                 <th>Generasi</th>
+                                <th>Fraud</th>
                                 <th>Status</th>
                                 <th>Aksi</th>
                             </tr>
@@ -168,6 +170,15 @@ export default function AdminUsersPage() {
                                     </td>
                                     <td>{user.customQuota ?? user.monthlyQuota}/bln</td>
                                     <td>{user._count.generations}</td>
+                                    <td>
+                                        {user.fraudAttempts > 0 ? (
+                                            <span className="badge badge-error" title={`${user.fraudAttempts} percobaan fraud`}>
+                                                ⚠️ {user.fraudAttempts}
+                                            </span>
+                                        ) : (
+                                            <span style={{ color: "var(--surface-400)", fontSize: "12px" }}>0</span>
+                                        )}
+                                    </td>
                                     <td>
                                         {user.isBanned ? (
                                             <span className="badge badge-error">Banned</span>

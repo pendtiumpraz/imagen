@@ -1,8 +1,7 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { AuthProvider } from "@/components/providers/AuthProvider";
-import { DashboardSidebar } from "@/components/dashboard/Sidebar";
-import { DashboardTopbar } from "@/components/dashboard/TopBar";
+import { DashboardShell } from "@/components/dashboard/DashboardShell";
 
 export default async function DashboardLayout({
     children,
@@ -14,13 +13,9 @@ export default async function DashboardLayout({
 
     return (
         <AuthProvider>
-            <div className="dashboard-layout">
-                <DashboardSidebar user={session.user} />
-                <div className="main-content">
-                    <DashboardTopbar user={session.user} />
-                    <div className="page-content">{children}</div>
-                </div>
-            </div>
+            <DashboardShell user={session.user}>
+                {children}
+            </DashboardShell>
         </AuthProvider>
     );
 }

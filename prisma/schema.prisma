@@ -76,6 +76,7 @@ model User {
   customQuota   Int?
   isBanned      Boolean          @default(false)
   banReason     String?
+  fraudAttempts Int              @default(0)
   avatarUrl     String?
 
   deletedAt DateTime?
@@ -110,6 +111,7 @@ model Generation {
   errorMessage String?
 
   isPublic Boolean @default(true)
+  isFraudAttempt Boolean @default(false)
 
   deletedAt DateTime?
 

@@ -46,6 +46,11 @@ export default function GeneratorPage() {
     const [customColor, setCustomColor] = useState("");
     const [selectedElements, setSelectedElements] = useState<string[]>(["calligraphy", "dome"]);
 
+    // Toggle options
+    const [useStyle, setUseStyle] = useState(true);
+    const [useBackground, setUseBackground] = useState(true);
+    const [useElements, setUseElements] = useState(true);
+
     // Logo
     const [logoFile, setLogoFile] = useState<File | null>(null);
     const [logoPreview, setLogoPreview] = useState<string | null>(null);
@@ -258,12 +263,12 @@ export default function GeneratorPage() {
                     aspectRatio,
                     referenceImages: initImages.length > 0 ? initImages : undefined,
                     isPublic,
-                    style,
-                    background,
-                    customBackground: background === "custom" ? customBackground : undefined,
+                    style: useStyle ? style : "none",
+                    background: useBackground ? background : "none",
+                    customBackground: (useBackground && background === "custom") ? customBackground : undefined,
                     colorPalette,
                     customColor: colorPalette === "custom" ? customColor : undefined,
-                    elements: selectedElements,
+                    elements: useElements ? selectedElements : [],
                 }),
             });
 
@@ -368,48 +373,74 @@ export default function GeneratorPage() {
 
                     {/* Style Selection */}
                     <div className="card">
-                        <label className="input-label" style={{ marginBottom: "12px", display: "flex", alignItems: "center", gap: "8px" }}>
-                            <Layers size={16} /> Gaya / Style
-                        </label>
-                        <div className="aspect-grid" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))" }}>
-                            {STYLE_OPTIONS.map((s) => (
-                                <button
-                                    key={s.id}
-                                    className={`aspect-option ${style === s.id ? "aspect-option-active" : ""}`}
-                                    onClick={() => setStyle(s.id)}
-                                    title={s.description}
-                                >
-                                    {s.name}
-                                </button>
-                            ))}
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
+                            <label className="input-label" style={{ marginBottom: 0, display: "flex", alignItems: "center", gap: "8px" }}>
+                                <Layers size={16} /> Gaya / Style
+                            </label>
+                            <label style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer", fontSize: "12px", color: "var(--surface-300)" }}>
+                                <input type="checkbox" checked={useStyle} onChange={(e) => setUseStyle(e.target.checked)}
+                                    style={{ width: "16px", height: "16px", accentColor: "var(--primary-500)" }} />
+                                Aktif
+                            </label>
                         </div>
+                        {useStyle && (
+                            <div className="aspect-grid" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))" }}>
+                                {STYLE_OPTIONS.map((s) => (
+                                    <button
+                                        key={s.id}
+                                        className={`aspect-option ${style === s.id ? "aspect-option-active" : ""}`}
+                                        onClick={() => setStyle(s.id)}
+                                        title={s.description}
+                                    >
+                                        {s.name}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                        {!useStyle && (
+                            <p style={{ fontSize: "12px", color: "var(--surface-400)", fontStyle: "italic" }}>Style dinonaktifkan — AI menentukan gaya sendiri</p>
+                        )}
                     </div>
 
                     {/* Background Selection */}
                     <div className="card">
-                        <label className="input-label" style={{ marginBottom: "12px", display: "flex", alignItems: "center", gap: "8px" }}>
-                            <Sun size={16} /> Background
-                        </label>
-                        <div className="aspect-grid" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))" }}>
-                            {BACKGROUND_OPTIONS.map((bg) => (
-                                <button
-                                    key={bg.id}
-                                    className={`aspect-option ${background === bg.id ? "aspect-option-active" : ""}`}
-                                    onClick={() => setBackground(bg.id)}
-                                    style={{ fontSize: "12px" }}
-                                >
-                                    {bg.name}
-                                </button>
-                            ))}
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
+                            <label className="input-label" style={{ marginBottom: 0, display: "flex", alignItems: "center", gap: "8px" }}>
+                                <Sun size={16} /> Background
+                            </label>
+                            <label style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer", fontSize: "12px", color: "var(--surface-300)" }}>
+                                <input type="checkbox" checked={useBackground} onChange={(e) => setUseBackground(e.target.checked)}
+                                    style={{ width: "16px", height: "16px", accentColor: "var(--primary-500)" }} />
+                                Aktif
+                            </label>
                         </div>
-                        {background === "custom" && (
-                            <input
-                                className="input"
-                                style={{ marginTop: "12px" }}
-                                placeholder="Deskripsikan background yang diinginkan..."
-                                value={customBackground}
-                                onChange={(e) => setCustomBackground(e.target.value)}
-                            />
+                        {useBackground && (
+                            <>
+                                <div className="aspect-grid" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))" }}>
+                                    {BACKGROUND_OPTIONS.map((bg) => (
+                                        <button
+                                            key={bg.id}
+                                            className={`aspect-option ${background === bg.id ? "aspect-option-active" : ""}`}
+                                            onClick={() => setBackground(bg.id)}
+                                            style={{ fontSize: "12px" }}
+                                        >
+                                            {bg.name}
+                                        </button>
+                                    ))}
+                                </div>
+                                {background === "custom" && (
+                                    <input
+                                        className="input"
+                                        style={{ marginTop: "12px" }}
+                                        placeholder="Deskripsikan background yang diinginkan..."
+                                        value={customBackground}
+                                        onChange={(e) => setCustomBackground(e.target.value)}
+                                    />
+                                )}
+                            </>
+                        )}
+                        {!useBackground && (
+                            <p style={{ fontSize: "12px", color: "var(--surface-400)", fontStyle: "italic" }}>Background dinonaktifkan — AI menentukan background sendiri</p>
                         )}
                     </div>
 
@@ -454,21 +485,33 @@ export default function GeneratorPage() {
 
                     {/* Islamic Elements */}
                     <div className="card">
-                        <label className="input-label" style={{ marginBottom: "12px", display: "flex", alignItems: "center", gap: "8px" }}>
-                            🕌 Elemen Islami
-                        </label>
-                        <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
-                            {ISLAMIC_ELEMENTS.map((el) => (
-                                <button
-                                    key={el.id}
-                                    className={`aspect-option ${selectedElements.includes(el.id) ? "aspect-option-active" : ""}`}
-                                    onClick={() => toggleElement(el.id)}
-                                    style={{ fontSize: "12px" }}
-                                >
-                                    {el.name}
-                                </button>
-                            ))}
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
+                            <label className="input-label" style={{ marginBottom: 0, display: "flex", alignItems: "center", gap: "8px" }}>
+                                🕌 Elemen Islami
+                            </label>
+                            <label style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer", fontSize: "12px", color: "var(--surface-300)" }}>
+                                <input type="checkbox" checked={useElements} onChange={(e) => setUseElements(e.target.checked)}
+                                    style={{ width: "16px", height: "16px", accentColor: "var(--primary-500)" }} />
+                                Aktif
+                            </label>
                         </div>
+                        {useElements && (
+                            <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+                                {ISLAMIC_ELEMENTS.map((el) => (
+                                    <button
+                                        key={el.id}
+                                        className={`aspect-option ${selectedElements.includes(el.id) ? "aspect-option-active" : ""}`}
+                                        onClick={() => toggleElement(el.id)}
+                                        style={{ fontSize: "12px" }}
+                                    >
+                                        {el.name}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                        {!useElements && (
+                            <p style={{ fontSize: "12px", color: "var(--surface-400)", fontStyle: "italic" }}>Elemen Islami dinonaktifkan — poster tanpa ornamen khusus</p>
+                        )}
                     </div>
 
                     {/* Logo Upload */}

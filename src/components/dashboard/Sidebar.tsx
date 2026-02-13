@@ -11,6 +11,7 @@ import {
     Settings,
     Shield,
     LogOut,
+    RefreshCw,
 } from "lucide-react";
 import { signOut } from "next-auth/react";
 
@@ -22,6 +23,8 @@ interface SidebarProps {
         role: string;
         plan: string;
     };
+    isOpen?: boolean;
+    onClose?: () => void;
 }
 
 const navItems = [
@@ -30,6 +33,7 @@ const navItems = [
         items: [
             { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
             { href: "/generate", icon: Wand2, label: "Generate Poster" },
+            { href: "/revise", icon: RefreshCw, label: "Revisi Poster" },
             { href: "/gallery", icon: Images, label: "Gallery Saya" },
         ],
     },
@@ -42,7 +46,7 @@ const navItems = [
     },
 ];
 
-export function DashboardSidebar({ user }: SidebarProps) {
+export function DashboardSidebar({ user, isOpen, onClose }: SidebarProps) {
     const pathname = usePathname();
 
     const planLabel =
@@ -53,7 +57,7 @@ export function DashboardSidebar({ user }: SidebarProps) {
                 : "Free";
 
     return (
-        <aside className="sidebar">
+        <aside className={`sidebar ${isOpen ? "sidebar-open" : ""}`}>
             <div className="sidebar-header">
                 <Link href="/" className="logo">
                     <div className="logo-icon">
@@ -73,6 +77,7 @@ export function DashboardSidebar({ user }: SidebarProps) {
                                 href={item.href}
                                 className={`sidebar-link ${pathname === item.href ? "sidebar-link-active" : ""
                                     }`}
+                                onClick={onClose}
                             >
                                 <item.icon size={18} />
                                 {item.label}

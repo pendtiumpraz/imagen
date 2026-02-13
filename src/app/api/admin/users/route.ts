@@ -35,6 +35,7 @@ export async function GET(req: NextRequest) {
                 customQuota: true,
                 isBanned: true,
                 banReason: true,
+                fraudAttempts: true,
                 createdAt: true,
                 _count: { select: { generations: true } },
             },

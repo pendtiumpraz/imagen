@@ -8,6 +8,7 @@ interface TopbarProps {
         name: string;
         plan: string;
     };
+    onToggleSidebar?: () => void;
 }
 
 const pageTitles: Record<string, string> = {
@@ -22,9 +23,10 @@ const pageTitles: Record<string, string> = {
     "/admin/settings": "Pengaturan Sistem",
     "/admin/payments": "Pembayaran",
     "/payment": "Konfirmasi Pembayaran",
+    "/revise": "Revisi Poster",
 };
 
-export function DashboardTopbar({ user }: TopbarProps) {
+export function DashboardTopbar({ user, onToggleSidebar }: TopbarProps) {
     const pathname = usePathname();
     const title =
         pageTitles[pathname] ||
@@ -33,7 +35,11 @@ export function DashboardTopbar({ user }: TopbarProps) {
     return (
         <header className="topbar">
             <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                <button className="mobile-menu-btn btn-icon btn-ghost">
+                <button
+                    className="mobile-menu-btn btn-icon btn-ghost"
+                    onClick={onToggleSidebar}
+                    aria-label="Toggle menu"
+                >
                     <Menu size={20} />
                 </button>
                 <h1 className="topbar-title">{title}</h1>

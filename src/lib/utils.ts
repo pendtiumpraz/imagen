@@ -203,33 +203,7 @@ export const CATEGORIES: CategoryInfo[] = [
         group: "dakwah",
         promptTemplate: "Islamic greeting card, beautiful floral Islamic pattern, warm colors, festive design, elegant typography area",
     },
-    {
-        id: "POSTER_MAULID",
-        name: "Poster Maulid Nabi",
-        description: "Poster peringatan Maulid Nabi Muhammad SAW",
-        icon: "Star",
-        defaultAspectRatio: "3:4",
-        group: "dakwah",
-        promptTemplate: "Mawlid celebration poster, Prophet Muhammad birthday commemoration, green and gold Islamic design, Madinah mosque, beautiful calligraphy",
-    },
-    {
-        id: "POSTER_ISRA_MIRAJ",
-        name: "Poster Isra Mi'raj",
-        description: "Poster peringatan Isra Mi'raj Nabi Muhammad SAW",
-        icon: "Sparkles",
-        defaultAspectRatio: "3:4",
-        group: "dakwah",
-        promptTemplate: "Isra Mi'raj night journey poster, Masjid Al-Aqsa, night sky with stars, Buraq silhouette, golden celestial atmosphere",
-    },
-    {
-        id: "POSTER_TAHUN_BARU_HIJRIAH",
-        name: "Poster 1 Muharram",
-        description: "Poster Tahun Baru Islam / 1 Muharram",
-        icon: "CalendarDays",
-        defaultAspectRatio: "3:4",
-        group: "dakwah",
-        promptTemplate: "Islamic New Year poster, 1 Muharram, Hijri new year celebration, crescent moon, elegant Islamic calligraphy, fresh start theme",
-    },
+
 
     // ---- KEGIATAN ----
     {
@@ -474,6 +448,9 @@ export function buildIslamicPrompt(params: {
 }): string {
     const parts: string[] = [];
 
+    // 0. Full-screen poster instruction
+    parts.push("full-screen poster design, edge-to-edge layout filling the entire canvas, no mockup frame, no device frame, no surrounding background margin");
+
     // 1. Category template
     parts.push(params.categoryTemplate);
 
@@ -482,18 +459,20 @@ export function buildIslamicPrompt(params: {
         parts.push(params.userPrompt.trim());
     }
 
-    // 3. Style
-    if (params.style) {
+    // 3. Style (skip if "none")
+    if (params.style && params.style !== "none") {
         const styleObj = STYLE_OPTIONS.find((s) => s.id === params.style);
         if (styleObj) parts.push(styleObj.promptModifier);
     }
 
-    // 4. Background
-    if (params.background === "custom" && params.customBackground) {
-        parts.push(params.customBackground);
-    } else if (params.background) {
-        const bgObj = BACKGROUND_OPTIONS.find((b) => b.id === params.background);
-        if (bgObj && bgObj.promptModifier) parts.push(bgObj.promptModifier);
+    // 4. Background (skip if "none")
+    if (params.background && params.background !== "none") {
+        if (params.background === "custom" && params.customBackground) {
+            parts.push(params.customBackground);
+        } else {
+            const bgObj = BACKGROUND_OPTIONS.find((b) => b.id === params.background);
+            if (bgObj && bgObj.promptModifier) parts.push(bgObj.promptModifier);
+        }
     }
 
     // 5. Color
@@ -504,8 +483,8 @@ export function buildIslamicPrompt(params: {
         if (colorObj && colorObj.promptModifier) parts.push(colorObj.promptModifier);
     }
 
-    // 6. Islamic elements
-    if (params.elements && params.elements.length > 0) {
+    // 6. Islamic elements (skip if empty or contains only "none")
+    if (params.elements && params.elements.length > 0 && !params.elements.includes("none")) {
         const elementPrompts = params.elements
             .map((id) => ISLAMIC_ELEMENTS.find((e) => e.id === id)?.promptModifier)
             .filter(Boolean);
