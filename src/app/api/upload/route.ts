@@ -1,32 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { writeFile, mkdir, unlink } from "fs/promises";
+import { writeFile, mkdir } from "fs/promises";
 import { join } from "path";
-import { prisma } from "@/lib/prisma";
 import crypto from "crypto";
+import os from "os";
 
-// On-demand cleanup: delete expired temp files
-async function cleanupExpiredFiles() {
-    try {
-        const expired = await prisma.tempFile.findMany({
-            where: { expiresAt: { lt: new Date() } },
-            take: 10, // limit batch
-        });
-        for (const file of expired) {
-            try {
-                const filepath = join(process.cwd(), "public", "uploads", file.filename);
-                await unlink(filepath).catch(() => { });
-            } catch { /* ignore */ }
-            await prisma.tempFile.delete({ where: { id: file.id } }).catch(() => { });
-        }
-    } catch { /* non-critical */ }
+/**
+ * Get the upload directory.
+ * - On Vercel (serverless): use os.tmpdir() (/tmp)
+ * - Locally: use public/uploads for easier access
+ */
+function getUploadDir() {
+    if (process.env.VERCEL) {
+        return join(os.tmpdir(), "uploads");
+    }
+    return join(process.cwd(), "public", "uploads");
 }
 
 export async function POST(req: NextRequest) {
     try {
-        // Clean up expired temp files in background
-        cleanupExpiredFiles();
-
         const session = await auth();
         if (!session?.user) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -59,36 +51,26 @@ export async function POST(req: NextRequest) {
         const bytes = await file.arrayBuffer();
         const buffer = Buffer.from(bytes);
 
-        // Generate unique filename preserving extension
+        // Generate unique filename
         const ext = file.name.split(".").pop()?.toLowerCase() || "png";
         const safeExt = ["png", "jpg", "jpeg", "webp"].includes(ext) ? ext : "png";
         const filename = `${crypto.randomUUID()}.${safeExt}`;
 
-        // Ensure uploads directory exists
-        const uploadDir = join(process.cwd(), "public", "uploads");
+        // Write to upload directory
+        const uploadDir = getUploadDir();
         await mkdir(uploadDir, { recursive: true });
-
-        // Write file
         const filepath = join(uploadDir, filename);
         await writeFile(filepath, buffer);
 
-        // Get the public URL
+        // Build the public URL
+        // On Vercel: serve via /api/upload/serve?file=filename
+        // Locally: serve via /uploads/filename
         const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-        const url = `${appUrl}/uploads/${filename}`;
+        const url = process.env.VERCEL
+            ? `${appUrl}/api/upload/serve?file=${filename}`
+            : `${appUrl}/uploads/${filename}`;
 
-        // Create temp file record (expires in 5 minutes)
-        const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
-        await prisma.tempFile.create({
-            data: {
-                filename,
-                originalName: file.name,
-                mimeType: file.type,
-                url,
-                expiresAt,
-            },
-        });
-
-        return NextResponse.json({ url, filename, expiresAt });
+        return NextResponse.json({ url, filename });
     } catch (error) {
         console.error("Upload error:", error);
         return NextResponse.json(
