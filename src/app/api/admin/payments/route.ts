@@ -82,21 +82,36 @@ export async function PUT(req: NextRequest) {
                 },
             });
 
-            // Create subscription record
+            // Check for existing active subscription to handle renewal
             const now = new Date();
-            const endDate = new Date(now);
-            endDate.setMonth(endDate.getMonth() + 1);
-
-            await prisma.subscription.create({
-                data: {
-                    userId: payment.userId,
-                    plan: payment.plan,
-                    price: payment.amount,
-                    startDate: now,
-                    endDate,
-                    isActive: true,
-                },
+            const existingSub = await prisma.subscription.findFirst({
+                where: { userId: payment.userId, isActive: true, endDate: { gte: now } },
+                orderBy: { endDate: "desc" },
             });
+
+            if (existingSub) {
+                // Renewal: extend from current endDate (so no days are lost)
+                const newEndDate = new Date(existingSub.endDate);
+                newEndDate.setMonth(newEndDate.getMonth() + 1);
+                await prisma.subscription.update({
+                    where: { id: existingSub.id },
+                    data: { endDate: newEndDate, plan: payment.plan, price: payment.amount },
+                });
+            } else {
+                // New subscription: start from now
+                const endDate = new Date(now);
+                endDate.setMonth(endDate.getMonth() + 1);
+                await prisma.subscription.create({
+                    data: {
+                        userId: payment.userId,
+                        plan: payment.plan,
+                        price: payment.amount,
+                        startDate: now,
+                        endDate,
+                        isActive: true,
+                    },
+                });
+            }
         }
 
         return NextResponse.json({ success: true, status });

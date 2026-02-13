@@ -1,12 +1,12 @@
 import { prisma } from "@/lib/prisma";
-import { Users, Images, CreditCard, TrendingUp, Clock } from "lucide-react";
+import { Users, Images, CreditCard, TrendingUp, Clock, Ticket } from "lucide-react";
 import Link from "next/link";
 
 export default async function AdminDashboard() {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const [totalUsers, totalGenerations, todayGenerations, activeSubscriptions, pendingPayments] =
+    const [totalUsers, totalGenerations, todayGenerations, activeSubscriptions, pendingPayments, activeCoupons] =
         await Promise.all([
             prisma.user.count({ where: { deletedAt: null } }),
             prisma.generation.count({ where: { deletedAt: null } }),
@@ -15,6 +15,7 @@ export default async function AdminDashboard() {
             }),
             prisma.subscription.count({ where: { isActive: true } }),
             prisma.paymentConfirmation.count({ where: { status: "PENDING" } }),
+            prisma.coupon.count({ where: { isActive: true } }),
         ]);
 
     return (
@@ -91,6 +92,22 @@ export default async function AdminDashboard() {
                     </div>
                     <div className="category-card-desc">
                         Review & approve konfirmasi pembayaran user
+                    </div>
+                </Link>
+                <Link href="/admin/coupons" className="category-card">
+                    <div className="category-card-icon" style={{ background: "rgba(139,92,246,0.12)", color: "#8b5cf6" }}>
+                        <Ticket size={22} />
+                    </div>
+                    <div className="category-card-name">
+                        Kupon
+                        {activeCoupons > 0 && (
+                            <span className="badge badge-info" style={{ marginLeft: "8px", fontSize: "11px" }}>
+                                {activeCoupons} aktif
+                            </span>
+                        )}
+                    </div>
+                    <div className="category-card-desc">
+                        Kelola kode kupon untuk bonus quota dan diskon
                     </div>
                 </Link>
             </div>

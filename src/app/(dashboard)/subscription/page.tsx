@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Check, Crown, Zap, Sparkles, CreditCard, Star } from "lucide-react";
 import { PLAN_LIMITS, PAYMENT_INFO, formatPrice } from "@/lib/utils";
 import { checkQuota } from "@/lib/quota";
+import { CouponRedeemer } from "@/components/dashboard/CouponRedeemer";
 
 export default async function SubscriptionPage() {
     const session = await auth();
@@ -12,11 +13,17 @@ export default async function SubscriptionPage() {
 
     const user = await prisma.user.findUnique({
         where: { id: session.user.id },
-        select: { plan: true, monthlyQuota: true, customQuota: true },
+        select: { plan: true, monthlyQuota: true, customQuota: true, bonusQuota: true },
     });
 
     const currentPlan = user?.plan || "FREE";
     const quota = await checkQuota(session.user.id);
+
+    // Get active subscription for expiry display
+    const activeSub = currentPlan !== "FREE" ? await prisma.subscription.findFirst({
+        where: { userId: session.user.id, isActive: true, endDate: { gte: new Date() } },
+        orderBy: { endDate: "desc" },
+    }) : null;
 
     const plans = [
         { key: "FREE", icon: Sparkles },
@@ -33,7 +40,20 @@ export default async function SubscriptionPage() {
                 </div>
                 <p style={{ color: "var(--surface-300)", fontSize: "var(--text-sm)", marginTop: "4px" }}>
                     Kuota: {quota.remaining} sisa dari {quota.limit} {quota.isLifetime ? "seumur hidup" : "per bulan"}
+                    {(user?.bonusQuota ?? 0) > 0 && (
+                        <span style={{ color: "var(--primary-400)", marginLeft: "6px" }}>
+                            (+{user?.bonusQuota} bonus)
+                        </span>
+                    )}
                 </p>
+                {currentPlan !== "FREE" && (
+                    <p style={{ fontSize: "12px", marginTop: "4px", color: activeSub ? "var(--surface-400)" : "var(--error)" }}>
+                        {activeSub
+                            ? `Berlaku sampai: ${new Date(activeSub.endDate).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}`
+                            : "⚠️ Langganan expired! Silakan perpanjang untuk melanjutkan generate."
+                        }
+                    </p>
+                )}
             </div>
 
             {/* PROMO RAMADHAN Banner */}
@@ -197,6 +217,9 @@ export default async function SubscriptionPage() {
                     </Link>
                 </div>
             </div>
+
+            {/* Coupon Redemption */}
+            <CouponRedeemer />
         </>
     );
 }

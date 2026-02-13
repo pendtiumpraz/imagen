@@ -61,6 +61,12 @@ enum PaymentStatus {
   REJECTED
 }
 
+enum CouponType {
+  EXTRA_QUOTA
+  DISCOUNT
+  QUOTA_BOOST
+}
+
 // ==================== MODELS ====================
 
 model User {
@@ -74,6 +80,7 @@ model User {
   monthlyQuota  Int              @default(2)
   lifetimeQuota Int              @default(2)
   customQuota   Int?
+  bonusQuota    Int              @default(0)
   isBanned      Boolean          @default(false)
   banReason     String?
   fraudAttempts Int              @default(0)
@@ -84,11 +91,12 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  generations   Generation[]
-  subscriptions Subscription[]
-  brandPresets  BrandPreset[]
-  payments      PaymentConfirmation[]
-  monthlyUsages MonthlyUsage[]
+  generations        Generation[]
+  subscriptions      Subscription[]
+  brandPresets       BrandPreset[]
+  payments           PaymentConfirmation[]
+  monthlyUsages      MonthlyUsage[]
+  couponRedemptions  CouponRedemption[]
 
   @@index([email])
   @@index([deletedAt])
@@ -261,4 +269,38 @@ model SystemSetting {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// Coupon codes for bonus quota or discounts
+model Coupon {
+  id          String     @id @default(cuid())
+  code        String     @unique
+  type        CouponType
+  value       Int        // EXTRA_QUOTA: jumlah image, DISCOUNT: persen, QUOTA_BOOST: jumlah boost
+  maxUses     Int        @default(100)
+  usedCount   Int        @default(0)
+  expiresAt   DateTime
+  description String?    @db.Text  // Syarat & ketentuan
+  isActive    Boolean    @default(true)
+
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  redemptions CouponRedemption[]
+}
+
+// Track who redeemed which coupon (1x per user per coupon)
+model CouponRedemption {
+  id        String   @id @default(cuid())
+  userId    String
+  couponId  String
+
+  createdAt DateTime @default(now())
+
+  user   User   @relation(fields: [userId], references: [id])
+  coupon Coupon @relation(fields: [couponId], references: [id])
+
+  @@unique([userId, couponId])
+  @@index([userId])
+  @@index([couponId])
 }
